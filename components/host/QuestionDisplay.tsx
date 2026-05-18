@@ -1,0 +1,93 @@
+'use client';
+
+import Image from 'next/image';
+import { Timer } from '../shared/Timer';
+import { AudioPlayer } from '../shared/AudioPlayer';
+import { useCountdown } from '../../hooks/useCountdown';
+import type { SafeQuestion, GameState } from '../../lib/types';
+
+const CHOICE_COLORS = {
+  A: 'bg-red-500',
+  B: 'bg-blue-500',
+  C: 'bg-yellow-500',
+  D: 'bg-green-500',
+};
+
+interface QuestionDisplayProps {
+  question: SafeQuestion;
+  gameState: GameState;
+  answeredCount: number;
+  totalCount: number;
+}
+
+export function QuestionDisplay({ question, gameState, answeredCount, totalCount }: QuestionDisplayProps) {
+  const remainingMs = useCountdown(gameState.questionDurationMs, gameState.questionStartedAt);
+
+  return (
+    <div className="flex flex-col h-full p-6 gap-4">
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <span className="text-white/60 text-sm uppercase tracking-widest">
+          Question {gameState.currentQuestionIndex + 1} / {gameState.totalQuestions}
+        </span>
+        <span className="text-white/60 text-sm">
+          {answeredCount} / {totalCount} answered
+        </span>
+        <Timer remainingMs={remainingMs} totalMs={gameState.questionDurationMs} size="lg" />
+      </div>
+
+      {/* Media area */}
+      <div className="flex-1 flex items-center justify-center">
+        {question.type === 'image' ? (
+          <div className="relative w-full max-h-64 h-64">
+            <Image
+              src={question.mediaUrl}
+              alt="Guess this anime"
+              fill
+              className="object-contain rounded-xl"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/media/images/placeholder.jpg';
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-8xl animate-pulse">🎵</div>
+            <p className="text-white/60 text-lg">Listen carefully...</p>
+            <AudioPlayer
+              src={question.mediaUrl}
+              startSec={question.clipStartSec}
+              durationSec={question.clipDurationSec}
+              autoPlay
+            />
+          </div>
+        )}
+      </div>
+
+      {question.hint && (
+        <p className="text-center text-white/40 text-sm italic">Hint: {question.hint}</p>
+      )}
+
+      {/* Answer choices (multiple-choice only) */}
+      {question.answerMode === 'multiple-choice' && (
+        <div className="grid grid-cols-2 gap-3">
+          {question.choices.map(c => (
+            <div
+              key={c.id}
+              className={`${CHOICE_COLORS[c.id]} rounded-xl p-4 flex items-center gap-3`}
+            >
+              <span className="text-white font-black text-xl w-8">{c.id}</span>
+              <span className="text-white font-semibold text-lg">{c.text}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {question.answerMode === 'free-text' && (
+        <div className="text-center">
+          <p className="text-white/60 text-lg">Type your answer on your device</p>
+        </div>
+      )}
+    </div>
+  );
+}
