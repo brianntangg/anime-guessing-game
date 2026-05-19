@@ -18,9 +18,10 @@ interface QuestionDisplayProps {
   gameState: GameState;
   answeredCount: number;
   totalCount: number;
+  onSkip: () => void;
 }
 
-export function QuestionDisplay({ question, gameState, answeredCount, totalCount }: QuestionDisplayProps) {
+export function QuestionDisplay({ question, gameState, answeredCount, totalCount, onSkip }: QuestionDisplayProps) {
   const remainingMs = useCountdown(gameState.questionDurationMs, gameState.questionStartedAt);
 
   return (
@@ -30,10 +31,16 @@ export function QuestionDisplay({ question, gameState, answeredCount, totalCount
         <span className="text-white/60 text-sm uppercase tracking-widest">
           Question {gameState.currentQuestionIndex + 1} / {gameState.totalQuestions}
         </span>
-        <span className="text-white/60 text-sm">
-          {answeredCount} / {totalCount} answered
-        </span>
         <Timer remainingMs={remainingMs} totalMs={gameState.questionDurationMs} size="lg" />
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-white/60 text-sm">{answeredCount} / {totalCount} answered</span>
+          <button
+            onClick={onSkip}
+            className="text-white/40 hover:text-white/80 text-xs underline transition-colors"
+          >
+            Skip →
+          </button>
+        </div>
       </div>
 
       {/* Media area */}

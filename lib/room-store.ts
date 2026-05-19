@@ -29,7 +29,9 @@ export function createRoom(
   let code: string;
   do { code = generateRoomCode(); } while (rooms.has(code));
 
-  const selected = pack.questions.slice(0, questionCount);
+  const selected = [...pack.questions]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, questionCount);
 
   const room: Room = {
     code,

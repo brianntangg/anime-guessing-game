@@ -100,6 +100,7 @@ export interface ClientToServerEvents {
   'host:next-question': (payload: { roomCode: string }) => void;
   'host:skip-question': (payload: { roomCode: string }) => void;
   'host:kick-player': (payload: { roomCode: string; playerId: string }) => void;
+  'host:restart-game': (payload: { roomCode: string }) => void;
 
   // Player events
   'player:join': (payload: { roomCode: string; nickname: string }) => void;
@@ -127,4 +128,5 @@ export interface ServerToClientEvents {
   'game:reveal': (payload: { roundResult: RoundResult; players: Player[]; gameState: GameState }) => void;
   'game:leaderboard': (payload: { players: Player[]; gameState: GameState }) => void;
   'game:finished': (payload: { players: Player[]; roundResults: RoundResult[] }) => void;
+  'game:restarted': (snapshot: RoomSnapshot) => void;
 }

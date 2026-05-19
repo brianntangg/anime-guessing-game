@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useSocket, useSocketEvent } from '../../../hooks/useSocket';
 import { useGameStore } from '../../../hooks/useGameState';
+import { unlockAudio } from '../../../components/shared/AudioPlayer';
 import { Lobby } from '../../../components/host/Lobby';
 import { QuestionDisplay } from '../../../components/host/QuestionDisplay';
 import { RevealAnswer } from '../../../components/host/RevealAnswer';
@@ -68,10 +69,23 @@ export default function HostScreen() {
     useGameStore.getState().setFinished(players);
   });
 
+  useSocketEvent('game:restarted', (snapshot: RoomSnapshot) => {
+    useGameStore.getState().setFromSnapshot(snapshot, '__host__');
+    setAnsweredCount(0);
+    setTotalCount(0);
+  });
+
   const phase = store.gameState?.phase ?? 'lobby';
 
-  const handleStart = () => socket.emit('host:start-game', { roomCode });
+  const handleStart = () => {
+    unlockAudio();
+    socket.emit('host:start-game', { roomCode });
+  };
   const handleNext = () => socket.emit('host:next-question', { roomCode });
+  const handleRestart = () => {
+    unlockAudio();
+    socket.emit('host:restart-game', { roomCode });
+  };
 
   return (
     <div
@@ -93,6 +107,7 @@ export default function HostScreen() {
           gameState={store.gameState}
           answeredCount={answeredCount}
           totalCount={totalCount}
+          onSkip={() => socket.emit('host:skip-question', { roomCode })}
         />
       )}
 
@@ -109,6 +124,7 @@ export default function HostScreen() {
           players={store.players}
           gameState={store.gameState}
           onNext={handleNext}
+          onRestart={handleRestart}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useSocket, useSocketEvent } from '../../../hooks/useSocket';
 import { useGameStore } from '../../../hooks/useGameState';
@@ -15,6 +15,19 @@ export default function PlayerScreen() {
   const { roomCode } = useParams<{ roomCode: string }>();
   const socket = useSocket();
   const store = useGameStore();
+  const [connected, setConnected] = useState(true);
+
+  useEffect(() => {
+    const s = socket;
+    const onDisconnect = () => setConnected(false);
+    const onConnect = () => setConnected(true);
+    s.on('disconnect', onDisconnect);
+    s.on('connect', onConnect);
+    return () => {
+      s.off('disconnect', onDisconnect);
+      s.off('connect', onConnect);
+    };
+  }, [socket]);
 
   // On mount: if store has no state (page refresh), attempt rejoin using sessionStorage nickname
   useEffect(() => {
@@ -61,6 +74,10 @@ export default function PlayerScreen() {
     useGameStore.getState().setFinished(players);
   });
 
+  useSocketEvent('game:restarted', (snapshot: RoomSnapshot) => {
+    useGameStore.getState().setFromSnapshot(snapshot, socket.id ?? store.myPlayerId ?? '');
+  });
+
   useSocketEvent('player:kicked', () => {
     sessionStorage.removeItem(SESSION_KEY);
     window.location.href = '/play';
@@ -78,9 +95,15 @@ export default function PlayerScreen() {
 
   return (
     <div
-      className="h-dvh flex flex-col overflow-hidden"
+      className="h-dvh flex flex-col overflow-hidden relative"
       style={{ background: 'linear-gradient(135deg, #1a0533 0%, #2d0a5c 60%, #0f0f3d 100%)' }}
     >
+      {!connected && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm gap-3">
+          <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          <p className="text-white font-bold text-lg">Reconnecting...</p>
+        </div>
+      )}
       {phase === 'lobby' && (
         <WaitingRoom
           players={store.players}

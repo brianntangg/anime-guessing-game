@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { PlayerAvatar } from '../shared/PlayerAvatar';
 import type { Player, GameState } from '../../lib/types';
 
@@ -10,10 +12,21 @@ interface LeaderboardProps {
   players: Player[];
   gameState: GameState;
   onNext: () => void;
+  onRestart: () => void;
 }
 
-export function Leaderboard({ players, gameState, onNext }: LeaderboardProps) {
+export function Leaderboard({ players, gameState, onNext, onRestart }: LeaderboardProps) {
   const isFinished = gameState.phase === 'finished';
+
+  useEffect(() => {
+    if (!isFinished) return;
+    const burst = () =>
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.55 } });
+    burst();
+    const t1 = setTimeout(burst, 600);
+    const t2 = setTimeout(burst, 1200);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [isFinished]);
 
   return (
     <div className="flex flex-col h-full p-8 gap-6">
@@ -44,13 +57,22 @@ export function Leaderboard({ players, gameState, onNext }: LeaderboardProps) {
         ))}
       </div>
 
-      <div className="flex justify-center">
-        <button
-          onClick={onNext}
-          className="px-10 py-4 bg-white text-purple-700 font-black text-xl rounded-2xl shadow-xl hover:scale-105 transition-transform"
-        >
-          {isFinished ? 'Play Again' : 'Next Question →'}
-        </button>
+      <div className="flex justify-center gap-3">
+        {isFinished ? (
+          <button
+            onClick={onRestart}
+            className="px-10 py-4 bg-white text-purple-700 font-black text-xl rounded-2xl shadow-xl hover:scale-105 transition-transform"
+          >
+            🔄 Play Again
+          </button>
+        ) : (
+          <button
+            onClick={onNext}
+            className="px-10 py-4 bg-white text-purple-700 font-black text-xl rounded-2xl shadow-xl hover:scale-105 transition-transform"
+          >
+            Next Question →
+          </button>
+        )}
       </div>
     </div>
   );

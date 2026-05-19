@@ -86,6 +86,39 @@ export function registerSocketHandlers(io: AppServer): void {
       triggerReveal(io, roomCode);
     });
 
+    socket.on('host:restart-game', ({ roomCode }) => {
+      const room = getRoom(roomCode);
+      if (!room || room.hostSocketId !== socket.id) return;
+
+      clearTimers(room);
+
+      // Reset all player scores
+      for (const player of room.players.values()) {
+        player.score = 0;
+        player.lastAnswerCorrect = null;
+        player.lastPointsEarned = null;
+        player.connected = true;
+      }
+
+      // Re-shuffle questions
+      const total = room.gameState.totalQuestions;
+      room.selectedQuestions = [...room.pack.questions]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, total);
+
+      // Reset game state to lobby
+      room.gameState = {
+        phase: 'lobby',
+        currentQuestionIndex: 0,
+        totalQuestions: total,
+        questionStartedAt: null,
+        questionDurationMs: room.gameState.questionDurationMs,
+        roundResults: [],
+      };
+
+      io.to(roomCode).emit('game:restarted', toSnapshot(room));
+    });
+
     socket.on('host:kick-player', ({ roomCode, playerId }) => {
       const room = getRoom(roomCode);
       if (!room || room.hostSocketId !== socket.id) return;
