@@ -135,6 +135,9 @@ export function registerSocketHandlers(io: AppServer): void {
       if (room.gameState.phase !== 'lobby') {
         return socket.emit('room:error', { message: 'Game already in progress' });
       }
+      if (room.players.size >= 30) {
+        return socket.emit('room:error', { message: 'Room is full (max 30 players)' });
+      }
 
       const trimmed = nickname.trim().slice(0, 16);
       if (!trimmed) return socket.emit('room:error', { message: 'Nickname required' });

@@ -1,9 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import { Timer } from '../shared/Timer';
 import { AudioPlayer } from '../shared/AudioPlayer';
 import { useCountdown } from '../../hooks/useCountdown';
+import { getMediaUrl } from '../../lib/media';
 import type { SafeQuestion, GameState } from '../../lib/types';
 
 const CHOICE_COLORS = {
@@ -46,23 +46,21 @@ export function QuestionDisplay({ question, gameState, answeredCount, totalCount
       {/* Media area */}
       <div className="flex-1 flex items-center justify-center">
         {question.type === 'image' ? (
-          <div className="relative w-full max-h-64 h-64">
-            <Image
-              src={question.mediaUrl}
-              alt="Guess this anime"
-              fill
-              className="object-contain rounded-xl"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/media/images/placeholder.jpg';
-              }}
-            />
-          </div>
+          // Use plain <img> so no Next.js remotePatterns config is needed for R2
+          <img
+            src={getMediaUrl(question.mediaUrl)}
+            alt="Guess this anime"
+            className="max-h-64 max-w-full object-contain rounded-xl"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = getMediaUrl('/media/images/placeholder.jpg');
+            }}
+          />
         ) : (
           <div className="flex flex-col items-center gap-4">
             <div className="text-8xl animate-pulse">🎵</div>
             <p className="text-white/60 text-lg">Listen carefully...</p>
             <AudioPlayer
-              src={question.mediaUrl}
+              src={getMediaUrl(question.mediaUrl)}
               startSec={question.clipStartSec}
               durationSec={question.clipDurationSec}
               autoPlay
